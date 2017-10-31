@@ -12,7 +12,7 @@ from celery.task.control import revoke
 
 app = Flask(__name__)
 
-app.config.from_object('config.Redis')
+app.config.from_object('config.AWSElastiCache')
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
