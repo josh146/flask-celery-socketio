@@ -13,5 +13,5 @@ class Redis(Config):
 class AWSElastiCache(Config):
     MESSAGE_BROKER = True
     BROKER_NAME = 'AWSElastiCache'
-    CELERY_BROKER_URL = 'redis://sfuiredis.xdgpw9.0001.use1.cache.amazonaws.com:6379'
-    CELERY_RESULT_BACKEND = 'redis://sfuiredis.xdgpw9.0001.use1.cache.amazonaws.com:6379'
+    CELERY_BROKER_URL = 'redis://redis-server.xdgpw9.0001.use1.cache.amazonaws.com:6379'
+    CELERY_RESULT_BACKEND = 'redis://redis-server.xdgpw9.0001.use1.cache.amazonaws.com:6379'
