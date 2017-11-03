@@ -6,6 +6,7 @@
     <link rel="stylesheet"
       href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
   </head>
   <body>
     <div style="margin:10px">
@@ -27,6 +28,29 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
     <script>
+        var userId;
+        namespace = '/run';
+        // stablish a connection to the server for the client  
+        var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+        // upon the connetion, the client emits an event to the server called 'connection'  
+        socket.on('connect', function(){
+            socket.emit('status', {status: 'I\'m connected!'});
+        });
+
+        socket.on('connected', function(msg){
+            userId = msg.user_id;
+        });
+
+
+        socket.on('event', function(msg){
+            taskID = msg.task_id
+            barID = msg.bar_id
+            data = msg.data
+            $('#'+barID).find('.cancel').attr('task',taskID);
+            update_progress(barID, taskID, data);
+        });
+
+
         hljs.initHighlightingOnLoad();
         hljs.initHighlighting.called = false;
         $('pre').each(function(i, e) {
@@ -46,93 +70,65 @@
             barNum ++;
 
             // send ajax POST request to start background job
-            $.ajax({
-                type: 'POST',
-                url: '/submit',
-                success: function(data, status, request) {
-                    status_url = request.getResponseHeader('Location');
-                    taskID = request.getResponseHeader('id');
-                    $('#'+barID).find('.cancel').attr('task',taskID);
-                    update_progress(status_url, barID, div[0], taskID);
-                },
-                error: function() {
-                    alert('Unexpected error');
-                }
-            });
+            socket.emit('submit', {'user_id': userId, 'bar_id':barID});
         }
-        function update_progress(status_url, barID, status_div, taskID) {
-            // send GET request to status URL
-            $.getJSON(status_url, function(data) {
 
-                // update UI
-                $('#'+barID).find('.task-id').html('<strong>TaskID:</strong> '+taskID);
-                percent = parseInt(data['current'] * 100 / data['total']);
-                $('#'+barID).find('.progress-bar').css('width', percent+'%')
-                $('#'+barID).find('.progress-percent').text(percent + '%');
+        function update_progress(barID, taskID, data) {
+            // update UI
+            $('#'+barID).find('.task-id').html('<strong>TaskID:</strong> '+taskID);
+            percent = parseInt(data['current'] * 100 / data['total']);
+            $('#'+barID).find('.progress-bar').css('width', percent+'%')
+            $('#'+barID).find('.progress-percent').text(percent + '%');
+            $('#'+barID).find('.progress-status').text(data['status']);
+
+            if (data['state'] == 'REVOKED'){
                 $('#'+barID).find('.progress-status').text(data['status']);
-
-                if (data['state'] == 'REVOKED'){
-                    $('#'+barID).find('.progress-status').text(data['status']);
-                    $('#'+barID).find('.progress-percent').text("CANCELED");
-                }
-                else if (data['state'] == 'FAILURE'){
-                    $('#'+barID).find('.progress-percent').text("ERROR");
-                    $('#'+barID).find('.progress-bar').addClass("bg-danger");
-                    $('#'+barID).find('.progress-status').html("<br><pre class='bash'>"+data['traceback']+"</pre>");
+                $('#'+barID).find('.progress-percent').text("CANCELED");
+                $
+            }
+            else if (data['state'] == 'FAILURE'){
+                $('#'+barID).find('.progress-percent').text("ERROR");
+                $('#'+barID).find('.progress-bar').addClass("bg-danger");
+                $('#'+barID).find('.progress-status').html("<br><pre class='bash'>"+data['traceback']+"</pre>");
+                $('#'+barID).find('.cancel').prop('disabled', true);
+                $('#'+barID).find('.clear').prop('disabled', false);
+                $('pre').each(function(i, e) {
+                  hljs.highlightBlock(e)
+                });
+            }
+            else if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+                if ('result' in data) {
+                    // show result
+                    $('#'+barID).find('.progress-status').text('Result: ' + data['result']);
+                    $('#'+barID).find('.progress-bar').addClass("bg-success");
                     $('#'+barID).find('.cancel').prop('disabled', true);
                     $('#'+barID).find('.clear').prop('disabled', false);
-                    $('pre').each(function(i, e) {
-                      hljs.highlightBlock(e)
-                    });
-                }
-                else if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
-                    if ('result' in data) {
-                        // show result
-                        $('#'+barID).find('.progress-status').text('Result: ' + data['result']);
-                        $('#'+barID).find('.progress-bar').addClass("bg-success");
-                        $('#'+barID).find('.cancel').prop('disabled', true);
-                        $('#'+barID).find('.clear').prop('disabled', false);
-                    }
-                    else {
-                        // something unexpected happened
-                        $('#'+barID).find('.progress-status').text('Result: ' + data['state']);
-                    }
                 }
                 else {
-                    // rerun in 2 seconds
-                    setTimeout(function() {
-                        update_progress(status_url, barID, status_div, taskID);
-                    }, 2000);
+                    // something unexpected happened
+                    $('#'+barID).find('.progress-status').text('Result: ' + data['state']);
                 }
-            });
+            }
         }
+
         $(function() {
             $('#start-bg-job').click(start_long_task);
         });
 
         $(function() {
             $(document).on('click',".cancel",function() {
-                var data = {
-                    'task_id' :  $(this).attr("task")
-                };
-
                 var button = $(this);
 
-                $.ajax({
-                    url: '/cancel',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    dataType: 'json',
-                    data: JSON.stringify(data, null, '\t'),
-                    success: function(data, status, request) {
-                        button.closest('.row').find('.progress-bar').addClass("bg-warning");
-                        button.prop('disabled', true);
-                        button.closest('div').find('.clear').prop('disabled', false);
-                    },
-                    error: function() {
-                        alert('Error: cannot cancel task');
-                    }
-                });
+                var data = {
+                    'task_id' :  button.attr("task"),
+                    'bar_id' :  button.closest('.row').attr("id"),
+                    'user_id': userId
+                };
+
+                socket.emit('cancel', data);
+                button.closest('.row').find('.progress-bar').addClass("bg-warning");
+                button.prop('disabled', true);
+                button.closest('div').find('.clear').prop('disabled', false);
             });
         });
 
