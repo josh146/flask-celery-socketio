@@ -13,7 +13,7 @@ eventlet.monkey_patch()
 
 app = Flask(__name__)
 
-app.config.from_object('config.Redis')
+app.config.from_object('config.AWSElastiCache')
 
 socketio = SocketIO(app,
     async_mode='eventlet',
@@ -43,7 +43,7 @@ def submit(msg):
     user_id = msg['user_id']
     bar_id = msg['bar_id']
 
-    task = submit_task.apply_async(args=[user_id,bar_id])
+    task = submit_task.apply_async(args=[user_id,bar_id], queue='socketIO')
     print(user_id)
 
     state = _current_state('PENDING', task.id, bar_id, 0, 1, 'Job pending...')

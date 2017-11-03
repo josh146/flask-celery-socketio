@@ -9,7 +9,7 @@ from celery.task.control import revoke
 from flask_socketio import SocketIO
 
 celery = Celery(__name__)
-celery.config_from_object('config.Redis')
+celery.config_from_object('config.AWSElastiCache')
 
 
 def _current_state(state, tid, bid, current, total, status, result=None):
@@ -31,7 +31,7 @@ def _current_state(state, tid, bid, current, total, status, result=None):
 @celery.task(bind=True)
 def submit_task(self, user_id, bar_id):
     """Background task that runs a long function with progress reports."""
-    socketio = SocketIO(message_queue='redis://localhost:6379/')
+    socketio = SocketIO(message_queue=celery.conf.broker_url)
 
     verb = ['Starting up', 'Booting', 'Repairing', 'Loading', 'Checking']
     adjective = ['master', 'radiant', 'silent', 'harmonic', 'fast']
