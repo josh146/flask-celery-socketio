@@ -31,7 +31,6 @@
         var userId;
         namespace = '/run';
         // stablish a connection to the server for the client
-        io.origins('*:*')
         var socket = io.connect('http://' + document.domain + ':' + 8080 + namespace);
         console.log('http://' + document.domain + ':' + 8080 + namespace)
         // upon the connetion, the client emits an event to the server called 'connection'  
