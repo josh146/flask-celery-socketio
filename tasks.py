@@ -9,7 +9,7 @@ from celery.task.control import revoke
 from flask_socketio import SocketIO
 
 celery = Celery(__name__)
-celery.config_from_object('config.AWSElastiCache')
+celery.config_from_object('config.Redis')
 
 
 def _current_state(state, tid, bid, current, total, status, result=None):

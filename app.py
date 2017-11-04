@@ -44,7 +44,6 @@ def submit(msg):
     bar_id = msg['bar_id']
 
     task = submit_task.apply_async(args=[user_id,bar_id], queue='socketIO')
-    print(user_id)
 
     state = _current_state('PENDING', task.id, bar_id, 0, 1, 'Job pending...')
     emit('event', state, room=user_id)
