@@ -30,9 +30,8 @@
     <script>
         var userId;
         namespace = '/run';
-        // stablish a connection to the server for the client
-        var socket = io.connect('//' + document.domain + ':' + 8080 + namespace);
-        console.log('//' + document.domain + ':' + 8080 + namespace)
+        // stablish a connection to the server for the client  
+        var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
         // upon the connetion, the client emits an event to the server called 'connection'  
         socket.on('connect', function(){
             socket.emit('status', {status: 'I\'m connected!'});
