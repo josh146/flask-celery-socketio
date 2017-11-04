@@ -5,8 +5,6 @@ from flask import Flask, Response, jsonify, flash, \
 
 from flask_socketio import SocketIO, emit, join_room, rooms
 
-from flask.ext.cors import CORS
-
 import eventlet
 
 from tasks import submit_task, _current_state
@@ -21,7 +19,7 @@ socketio = SocketIO(app,
     async_mode='eventlet',
     message_queue=app.config['BROKER_URL']
     )
-cors = CORS(app,resources={r"/*":{"origins":"*"}})
+
 
 @app.route('/', methods=['GET'])
 def index():
