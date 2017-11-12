@@ -9,7 +9,7 @@ from celery.task.control import revoke
 from flask_socketio import SocketIO
 
 celery = Celery(__name__)
-celery.config_from_object('config.Redis')
+celery.config_from_object('config.Broker')
 
 
 def _current_state(state, tid, bid, current, total, status, result=None):
@@ -21,7 +21,7 @@ def _current_state(state, tid, bid, current, total, status, result=None):
             'current': current,
             'total': total,
             'status': status,
-            'result': None
+            'result': result
         }
     }
 
@@ -49,6 +49,5 @@ def submit_task(self, user_id, bar_id):
         socketio.emit('event', state, room=user_id, namespace='/run')
         time.sleep(1)
 
-    state = _current_state('SUCCESS', self.request.id, bar_id, 1, 1, 'Complete!', 42)
+    state = _current_state('SUCCESS', self.request.id, bar_id, 1, 1, 'Complete!', result=42)
     socketio.emit('event', state, room=user_id, namespace='/run')
-

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
+import os
+brokerhost = os.environ['REDIS_URL']
 
 class Config(object):
     DEBUG = True
     
 class Broker(Config):
     BROKER_NAME = 'Redis'
-    BROKER_URL = 'redis://127.0.0.1:6379/0'
-    broker_url = 'redis://127.0.0.1:6379/0'
-    result_backend = 'redis://127.0.0.1:6379/0'
-    # BROKER_NAME = 'AWSElastiCache'
-    # BROKER_URL = 'redis://redis-server.xdgpw9.0001.use1.cache.amazonaws.com:6379'
-    # broker_url = 'redis://redis-server.xdgpw9.0001.use1.cache.amazonaws.com:6379'
-    # result_backend = 'redis://redis-server.xdgpw9.0001.use1.cache.amazonaws.com:6379'
+    BROKER_URL = 'redis://{}:6379/0'.format(brokerhost)
+    broker_url = 'redis://{}:6379/0'.format(brokerhost)
+    result_backend = 'redis://{}:6379/0'.format(brokerhost)
+    

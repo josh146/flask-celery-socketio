@@ -6,24 +6,19 @@ from flask import Flask, Response, jsonify, flash, \
 from flask_socketio import SocketIO, emit, join_room, rooms
 
 import eventlet
+eventlet.monkey_patch()
 
 from tasks import submit_task, _current_state
 
-eventlet.monkey_patch()
 
 app = Flask(__name__)
 
-app.config.from_object('config.Redis')
+app.config.from_object('config.Broker')
 
 socketio = SocketIO(app,
     async_mode='eventlet',
     message_queue=app.config['BROKER_URL']
     )
-
-
-@app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html')
 
 
 @socketio.on('connect', namespace='/run')
